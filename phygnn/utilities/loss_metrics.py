@@ -3,7 +3,7 @@
 Loss metrics for PhyGNN
 """
 import tensorflow as tf
-from tensorflow.keras.losses import binary_crossentropy as tf_bx
+from keras.losses import binary_crossentropy as tf_bx
 
 
 def binary_crossentropy(*args):

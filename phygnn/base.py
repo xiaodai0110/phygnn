@@ -14,7 +14,7 @@ from inspect import signature
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tensorflow.keras.layers import LSTM, BatchNormalization, Dropout
+from keras.layers import LSTM, BatchNormalization, Dropout, InputLayer
 
 from phygnn.layers.handlers import Layers
 from phygnn.utilities import VERSION_RECORD
@@ -458,9 +458,7 @@ class CustomNetwork(ABC):
 
         # Keras 3 InputLayer stores input metadata but is not meant to be
         # called directly during eager execution.
-        if self.layers and isinstance(
-            self.layers[0], tf.keras.layers.InputLayer
-        ):
+        if self.layers and isinstance(self.layers[0], InputLayer):
             y = x
         else:
             y = self.layers[0](x)

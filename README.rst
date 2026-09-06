@@ -51,6 +51,10 @@ classification, and even GAN applications, see `the example notebooks here
 You can also run the examples using a free cloud-hosted jupyter instance via
 `Binder <https://mybinder.org/v2/gh/NatLabRockies/phygnn/HEAD>`_.
 
+For the local project structure and the added BN/Al2O3 multi-fidelity PGNN
+workflow, see `PROJECT_MODULES.md <PROJECT_MODULES.md>`_ and
+`workflow/README.md <workflow/README.md>`_.
+
 At NLR, we are using the phygnn framework
 to supplement traditional satellite-based cloud property prediction models. We
 use phygnn to predict cloud optical properties when the traditional mechanistic

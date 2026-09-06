@@ -3,7 +3,7 @@
 
 import os
 
-from tensorflow.keras.utils import get_custom_objects
+from keras.utils import get_custom_objects
 
 from ._version import __version__
 from .base import CustomNetwork, GradientUtils

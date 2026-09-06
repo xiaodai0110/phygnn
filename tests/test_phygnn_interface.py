@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import tensorflow as tf
-from tensorflow.keras.layers import Activation, Dense, InputLayer
+from keras.layers import Activation, Dense, InputLayer
 
 from phygnn import PhysicsGuidedNeuralNetwork
 from phygnn.model_interfaces.phygnn_model import PhygnnModel
@@ -183,6 +183,72 @@ def test_save_load():
             params = json.load(f)
 
         assert 'version_record' in params
+
+
+def test_bn_al2o3_multifidelity_interface():
+    """Test the BN/Al2O3 residual multi-fidelity interface."""
+    PhysicsGuidedNeuralNetwork.seed(0)
+    n = 36
+    phi_s = np.linspace(0.1, 0.55, n)
+    phi_m = np.linspace(0.25, 0.15, n)
+    raw = pd.DataFrame({
+        'D_s': np.linspace(0.8, 1.2, n),
+        'D_m': np.linspace(7.5, 8.5, n),
+        'D_l': np.linspace(42.0, 48.0, n),
+        'phi_s': phi_s,
+        'phi_m': phi_m,
+        'E': (phi_s - 0.35) ** 2 + (phi_m - 0.2) ** 2 + 0.01,
+    })
+    formatted = PhygnnModel.format_bn_al2o3_features(raw)
+    delta = 0.25 * phi_s + 0.1 * phi_m
+    k0 = 1.5
+    labels = pd.DataFrame({'k': k0 + delta})
+
+    model = PhygnnModel.build_bn_al2o3(
+        baseline_mu=k0,
+        baseline_stdev=0.1,
+        hidden_layers=[{'units': 12, 'activation': 'tanh'}],
+        learning_rate=0.01,
+    )
+    diagnostics = model.train_two_stage_multifidelity(
+        raw,
+        labels,
+        raw.iloc[:8],
+        labels.iloc[:8],
+        stage1_kwargs={
+            'n_epoch': 3,
+            'batch_size': 18,
+            'validation_split': 0.0,
+            'early_stop': False,
+        },
+        stage2_kwargs={
+            'n_epoch': 3,
+            'batch_size': 18,
+            'validation_split': 0.0,
+            'early_stop': False,
+            'loss_weights': {'lf': 1.0, 'hf': 5.0, 'baseline': 1.0},
+        },
+        return_diagnostics=True,
+    )
+
+    pred_k = model.predict_k(raw.iloc[:5])
+    pred_delta = model.predict_delta(formatted.iloc[:5])
+
+    assert formatted.columns.tolist() == model.feature_names
+    assert {'lf_pretrain', 'multifidelity_correction'} == set(
+        model.history['stage'].dropna()
+    )
+    assert diagnostics['stage1']['x_lf'].shape[-1] == 6
+    assert np.allclose(pred_k.values - pred_delta.values, model.baseline)
+    assert len(model.bias_weights) > 0
+
+    with tempfile.TemporaryDirectory() as td:
+        model_fpath = os.path.join(td, 'bn_al2o3_model/')
+        model.save_model(model_fpath)
+        loaded = PhygnnModel.load(model_fpath)
+
+    assert np.allclose(pred_k.values, loaded.predict_k(raw.iloc[:5]).values)
+    assert np.isclose(model.baseline, loaded.baseline)
 
 
 def test_OHE():

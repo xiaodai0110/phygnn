@@ -116,3 +116,24 @@ tags
 
 # dynamic versioning
 _version.py
+
+# BN/Al2O3 local run outputs
+data/
+models/
+outputs/
+
+# BN/Al2O3 generated example artifacts
+examples/bn_al2o3_model/
+examples/bo_experiment_suggestions.csv
+examples/bn_al2o3_loss_curve.png
+examples/bn_al2o3_metrics.png
+examples/bn_al2o3_metrics_summary.csv
+examples/bn_al2o3_predictions.csv
+examples/bn_al2o3_training_history.csv
+examples/df_particle_candidates.csv
+examples/experiment_recipes.csv
+examples/lf_bn_al2o3_data.csv
+examples/lf_bn_al2o3_test.csv
+examples/lf_bn_al2o3_train.csv
+examples/lf_test_predictions.csv
+examples/next_experiment_suggestions.csv

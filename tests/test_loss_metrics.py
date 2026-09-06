@@ -5,7 +5,7 @@ Tests for basic phygnn functionality and execution.
 import numpy as np
 import pytest
 import tensorflow as tf
-from tensorflow.keras.layers import Activation, Dense, InputLayer
+from keras.layers import Activation, Dense, InputLayer
 
 from phygnn import PhysicsGuidedNeuralNetwork
 

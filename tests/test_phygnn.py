@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import tensorflow as tf
-from tensorflow.keras.layers import (
+from keras.layers import (
     LSTM,
     Activation,
     BatchNormalization,
@@ -22,7 +22,7 @@ from tensorflow.keras.layers import (
     Flatten,
     InputLayer,
 )
-from tensorflow.keras.optimizers import Adam
+from keras.optimizers import Adam
 
 from phygnn import PhysicsGuidedNeuralNetwork
 from phygnn.layers.custom_layers import SkipConnection
@@ -290,6 +290,56 @@ def test_save_load():
     assert isinstance(model._optimizer, Adam)
     assert isinstance(loaded._optimizer, Adam)
     assert model._optimizer.get_config() == loaded._optimizer.get_config()
+
+
+def test_multifidelity_residual_training():
+    """Test LF/HF residual training with a constrained k0 baseline."""
+    PhysicsGuidedNeuralNetwork.seed(0)
+    x = np.linspace(-1, 1, 60).reshape((-1, 1))
+    delta = 0.25 * x + 0.1
+    k0 = 2.0
+    y_lf = k0 + delta + 0.05
+    y_hf = k0 + delta
+
+    model = PhysicsGuidedNeuralNetwork(
+        p_fun=None,
+        hidden_layers=[{'units': 16, 'activation': 'tanh'}],
+        loss_weights=(1.0, 0.0),
+        metric='mse',
+        learning_rate=0.01,
+        n_features=1,
+        n_labels=1,
+        baseline_init=1.8,
+        baseline_mu=k0,
+        baseline_stdev=0.2,
+        baseline_trainable=True,
+    )
+
+    kwargs = {
+        'x_lf': x,
+        'y_lf': y_lf,
+        'x_hf': x[:10],
+        'y_hf': y_hf[:10],
+        'loss_weights': {'lf': 1.0, 'hf': 10.0, 'baseline': 1.0},
+        'label_type': 'k',
+    }
+    start = model.calc_multifidelity_loss(**kwargs)[0].numpy()
+    model.fit_multifidelity(
+        **kwargs,
+        n_batch=4,
+        n_epoch=30,
+        validation_split=0.0,
+        early_stop=False,
+    )
+    end = model.calc_multifidelity_loss(**kwargs)[0].numpy()
+
+    pred_k = model.predict_k(x[:5])
+    pred_delta = model.predict_delta(x[:5])
+
+    assert end < start
+    assert np.allclose(pred_k - pred_delta, model.baseline)
+    assert abs(model.baseline - k0) < 0.5
+    assert 'training_hf_loss' in model.history
 
 
 def test_save_load_skip_connections():

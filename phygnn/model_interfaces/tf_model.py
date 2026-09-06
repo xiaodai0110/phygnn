@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow import feature_column
-from tensorflow.keras.optimizers import Adam
+from keras.optimizers import Adam
 
 from phygnn.layers.handlers import Layers
 from phygnn.model_interfaces.base_model import ModelBase

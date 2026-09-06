@@ -259,7 +259,13 @@ convention = "numpy"
 
 [tool.setuptools]
 include-package-data = true
-packages = ["phygnn"]
+packages = [
+  "phygnn",
+  "phygnn.layers",
+  "phygnn.model_interfaces",
+  "phygnn.utilities",
+  "phygnn.bn_al2o3",
+]
 
 [tool.setuptools_scm]
 version_file = "phygnn/_version.py"
